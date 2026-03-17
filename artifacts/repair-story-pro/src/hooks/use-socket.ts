@@ -9,7 +9,7 @@ export function useSocket() {
 
   useEffect(() => {
     // Connect to the same host
-    const socket = io({ path: "/socket.io" });
+    const socket = io({ path: "/api/socket.io" });
     socketRef.current = socket;
 
     socket.on("booking:update", (data: { bookingId: number; newStatus: string }) => {

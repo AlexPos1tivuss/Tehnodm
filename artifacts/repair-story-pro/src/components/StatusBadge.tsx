@@ -9,8 +9,10 @@ const statusConfig = {
   closed: { label: "Выдан", classes: "bg-gray-100 text-gray-500 border-gray-200" },
 };
 
-export function StatusBadge({ status }: { status: keyof typeof statusConfig }) {
-  const config = statusConfig[status] || statusConfig.new;
+type BookingStatus = "new" | "accepted" | "diagnosing" | "repairing" | "ready" | "closed";
+
+export function StatusBadge({ status }: { status: string }) {
+  const config = statusConfig[status as BookingStatus] || statusConfig.new;
   
   return (
     <span className={cn("px-3 py-1 text-xs font-medium rounded-full border shadow-sm", config.classes)}>

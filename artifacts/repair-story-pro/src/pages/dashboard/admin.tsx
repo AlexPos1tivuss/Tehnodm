@@ -11,7 +11,7 @@ export default function AdminDashboard() {
   useSocket();
   const [statusFilter, setStatusFilter] = useState<string>("");
   
-  const { data: bookings, isLoading } = useListBookings({ status: statusFilter as any || undefined });
+  const { data: bookings, isLoading } = useListBookings({ status: statusFilter || undefined });
   const { data: technicians } = useListTechnicians();
   const assignMutation = useAssignTechnician();
   const statusMutation = useUpdateBookingStatus();
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
                     <div className="font-mono text-xs text-slate-500 mt-1">{b.code}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <StatusBadge status={b.status as any} />
+                    <StatusBadge status={b.status} />
                   </td>
                   <td className="px-6 py-4">
                     <select
@@ -124,7 +124,7 @@ export default function AdminDashboard() {
                       <select
                         className="bg-primary/5 text-primary border border-primary/20 rounded-lg px-2 py-1 text-xs outline-none font-medium"
                         value={b.status}
-                        onChange={(e) => statusMutation.mutate({ id: b.id, data: { to: e.target.value as any, note: "Статус изменен админом" }})}
+                        onChange={(e) => statusMutation.mutate({ id: b.id, data: { to: e.target.value, note: "Статус изменен админом" }})}
                       >
                         <option value="new" disabled>Новый</option>
                         <option value="accepted">Принять</option>

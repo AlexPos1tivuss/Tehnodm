@@ -64,7 +64,7 @@ export default function Track() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-bold font-display">{data.booking.device}</h2>
-                <StatusBadge status={data.booking.status as any} />
+                <StatusBadge status={data.booking.status} />
               </div>
               <p className="text-slate-500 font-mono">Заказ: {data.booking.code}</p>
             </div>
@@ -89,7 +89,7 @@ export default function Track() {
                         {log.fromStatus}
                       </span>
                       <ArrowRight className="w-4 h-4 text-slate-400" />
-                      <StatusBadge status={log.toStatus as any} />
+                      <StatusBadge status={log.toStatus} />
                     </div>
                     <span className="text-sm text-slate-500">
                       {format(new Date(log.createdAt), "d MMM yyyy, HH:mm", { locale: ru })}

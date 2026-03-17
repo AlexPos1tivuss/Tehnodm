@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageTransition } from "@/components/PageTransition";
-import { treeData } from "@/lib/troubleshooter-data";
 import { HelpCircle, ArrowRight, RotateCcw, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 
@@ -12,14 +11,33 @@ type Node = {
 };
 
 export default function Troubleshooter() {
-  const [path, setPath] = useState<{ node: Node; selection?: string }[]>([{ node: treeData as Node }]);
+  const [treeData, setTreeData] = useState<Node | null>(null);
+  const [path, setPath] = useState<{ node: Node; selection?: string }[]>([]);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}data/tree.json`)
+      .then(res => res.json())
+      .then((data: Node) => {
+        setTreeData(data);
+        setPath([{ node: data }]);
+      })
+      .catch(err => console.error("Failed to load troubleshooter tree:", err));
+  }, []);
+
+  if (!treeData || path.length === 0) {
+    return (
+      <PageTransition className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+      </PageTransition>
+    );
+  }
 
   const currentNode = path[path.length - 1].node;
 
-  const handleSelect = (option: any) => {
+  const handleSelect = (option: { label: string; next?: Node; result?: string }) => {
     const newPath = [...path];
     newPath[newPath.length - 1].selection = option.label;
-    
+
     if (option.next) {
       newPath.push({ node: option.next });
     } else if (option.result) {
@@ -29,7 +47,7 @@ export default function Troubleshooter() {
   };
 
   const handleReset = () => {
-    setPath([{ node: treeData as Node }]);
+    setPath([{ node: treeData }]);
   };
 
   return (
@@ -43,8 +61,6 @@ export default function Troubleshooter() {
       </div>
 
       <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100">
-        
-        {/* Breadcrumbs */}
         {path.length > 1 && (
           <div className="flex flex-wrap items-center gap-2 mb-8 text-sm text-slate-500">
             <button onClick={handleReset} className="hover:text-primary">Начало</button>
@@ -82,13 +98,13 @@ export default function Troubleshooter() {
                 {currentNode.result}
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link 
-                  href="/booking/new" 
+                <Link
+                  href="/booking/new"
                   className="px-8 py-3 bg-primary text-white rounded-xl font-medium shadow-lg hover:bg-primary/90 transition-all"
                 >
                   Оформить заявку
                 </Link>
-                <button 
+                <button
                   onClick={handleReset}
                   className="flex items-center justify-center gap-2 px-8 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-all"
                 >

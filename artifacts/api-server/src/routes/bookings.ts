@@ -222,7 +222,9 @@ router.patch("/bookings/:id/status", requireAuth, requireRole("admin", "technici
       newStatus: body.data.to,
       log: logWithUser,
     });
-  } catch {}
+  } catch (err) {
+    console.error("Socket.io emit failed:", err);
+  }
 
   res.json(UpdateBookingStatusResponse.parse({ booking: updated, logs: allLogs }));
 });

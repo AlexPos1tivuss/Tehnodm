@@ -50,7 +50,7 @@ export default function ClientDashboard() {
                     </h3>
                     <p className="text-sm font-mono text-slate-500 mt-1">{booking.code}</p>
                   </div>
-                  <StatusBadge status={booking.status as any} />
+                  <StatusBadge status={booking.status} />
                 </div>
                 
                 <p className="text-slate-600 text-sm line-clamp-2 mb-6 h-10">

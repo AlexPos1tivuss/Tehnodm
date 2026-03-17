@@ -15,7 +15,7 @@ export default function TechnicianDashboard() {
   const [activeBookingId, setActiveBookingId] = useState<number | null>(null);
 
   const handleStatusChange = (id: number, toStatus: string) => {
-    statusMutation.mutate({ id, data: { to: toStatus as any, note } }, {
+    statusMutation.mutate({ id, data: { to: toStatus, note } }, {
       onSuccess: () => {
         setNote("");
         setActiveBookingId(null);
@@ -44,7 +44,7 @@ export default function TechnicianDashboard() {
                   <h3 className="text-xl font-bold">{b.device}</h3>
                   <p className="text-sm font-mono text-slate-500">Код: {b.code}</p>
                 </div>
-                <StatusBadge status={b.status as any} />
+                <StatusBadge status={b.status} />
               </div>
               
               <div className="bg-slate-50 p-4 rounded-xl text-sm mb-6">
