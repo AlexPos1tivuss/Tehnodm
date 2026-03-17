@@ -78,7 +78,9 @@ All mounted under `/api`:
 - `GET /bookings/track/:code` (public), `PATCH /bookings/:id/status` (admin/tech), `PATCH /bookings/:id/assign` (admin)
 - `GET /calendar/slots?date=YYYY-MM-DD` (public)
 - `GET /export/:id/pdf` (auth), `GET /export/csv` (admin)
-- `GET /users/technicians` (admin)
+- `GET /users/technicians` (admin), `GET /users` (admin)
+- `GET /stats` (admin) — booking statistics
+- `GET /bookings-with-clients` (admin) — bookings with client info joined
 - `GET /healthz`
 
 ## Booking Status Workflow
@@ -111,7 +113,7 @@ Every package extends `tsconfig.base.json` with `composite: true`. Root `tsconfi
 Express 5 API server with JWT auth, CRUD bookings, status workflow, calendar slots, PDF/CSV export, Socket.io realtime.
 
 ### `artifacts/repair-story-pro` (`@workspace/repair-story-pro`)
-React + Vite frontend. Russian UI for ТехноДимак branding. Pages: Home, Login, Register, ClientDashboard, AdminDashboard, TechnicianDashboard, PublicTracker, BookingForm, Calendar, Troubleshooter.
+React + Vite frontend. Russian UI for ТехноДимак branding. Pages: Home, Login, Register, ClientDashboard, AdminDashboard (full: stats, tabs, search, detail drawer, status modal, user/technician management), TechnicianDashboard, PublicTracker, BookingForm, Calendar, Troubleshooter.
 
 ### `lib/db` (`@workspace/db`)
 Drizzle ORM schema + PostgreSQL connection. Tables: users, bookings, repair_logs.
