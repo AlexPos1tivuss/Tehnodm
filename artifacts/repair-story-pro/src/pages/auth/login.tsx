@@ -38,7 +38,7 @@ export default function Login() {
       
       <div className="w-full max-w-md p-8 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white relative z-10 mx-4">
         <div className="flex justify-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-emerald-700 flex items-center justify-center text-white shadow-lg">
             <Wrench className="w-6 h-6" />
           </div>
         </div>

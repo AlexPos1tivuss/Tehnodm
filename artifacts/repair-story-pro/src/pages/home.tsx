@@ -18,7 +18,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-slate-900 mb-6 drop-shadow-sm">
             Сварочное оборудование в <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-700">
               надёжных руках
             </span>
           </h1>
@@ -54,7 +54,7 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-              <div className="w-14 h-14 bg-blue-100 text-primary rounded-2xl flex items-center justify-center mb-6">
+              <div className="w-14 h-14 bg-emerald-100 text-primary rounded-2xl flex items-center justify-center mb-6">
                 <Settings className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold mb-3 font-display">Техническое обслуживание</h3>

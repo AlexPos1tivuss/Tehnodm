@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
-import { RegisterBody, LoginBody, LoginResponse, GetMeResponse } from "@workspace/api-zod";
+import { RegisterBody, LoginBody, LoginResponse, GetMeResponse, RefreshTokenResponse } from "@workspace/api-zod";
 import { hashPassword, comparePassword, signToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/auth";
 
@@ -70,10 +70,7 @@ router.post("/auth/refresh", requireAuth, async (req, res): Promise<void> => {
   }
 
   const accessToken = signToken({ userId: user.id, email: user.email, role: user.role });
-  res.json(LoginResponse.parse({
-    accessToken,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
-  }));
+  res.json(RefreshTokenResponse.parse({ accessToken }));
 });
 
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {

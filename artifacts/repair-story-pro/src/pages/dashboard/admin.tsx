@@ -294,8 +294,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Package className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <Package className="w-5 h-5 text-emerald-700" />
             </div>
             <span className="text-sm text-slate-500">Всего заявок</span>
           </div>
@@ -339,7 +339,7 @@ export default function AdminDashboard() {
               const pct = (count / stats.total) * 100;
               const colors: Record<string, string> = {
                 new: "bg-slate-400",
-                accepted: "bg-indigo-400",
+                accepted: "bg-emerald-600",
                 diagnosing: "bg-amber-400",
                 repairing: "bg-purple-400",
                 ready: "bg-emerald-400",
@@ -608,7 +608,7 @@ export default function AdminDashboard() {
                                 ? "bg-red-50 text-red-600 border-red-200"
                                 : u.role === "technician"
                                 ? "bg-purple-50 text-purple-600 border-purple-200"
-                                : "bg-blue-50 text-blue-600 border-blue-200"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
                             }`}
                           >
                             {u.role === "admin" ? "Администратор" : u.role === "technician" ? "Мастер" : "Клиент"}

@@ -52,7 +52,7 @@ router.get("/bookings", requireAuth, requireRole("admin", "technician"), async (
   res.json(bookings.map(b => ListBookingsResponseItem.parse(b)));
 });
 
-router.post("/bookings", requireAuth, async (req, res): Promise<void> => {
+router.post("/bookings", requireAuth, requireRole("client"), async (req, res): Promise<void> => {
   const body = { ...req.body };
   if (body.appointmentAt && typeof body.appointmentAt === "string") {
     body.appointmentAt = new Date(body.appointmentAt);
@@ -229,7 +229,7 @@ router.patch("/bookings/:id/status", requireAuth, requireRole("admin", "technici
   res.json(UpdateBookingStatusResponse.parse({ booking: updated, logs: allLogs }));
 });
 
-router.patch("/bookings/:id/assign", requireAuth, requireRole("admin"), async (req, res): Promise<void> => {
+router.patch("/bookings/:id/assign", requireAuth, requireRole("admin", "technician"), async (req, res): Promise<void> => {
   const params = AssignTechnicianParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

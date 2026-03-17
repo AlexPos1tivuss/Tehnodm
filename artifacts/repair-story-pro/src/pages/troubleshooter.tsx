@@ -53,7 +53,7 @@ export default function Troubleshooter() {
   return (
     <PageTransition className="max-w-3xl mx-auto px-4 py-16">
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-primary rounded-2xl mb-6">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 text-primary rounded-2xl mb-6">
           <HelpCircle className="w-8 h-8" />
         </div>
         <h1 className="text-4xl font-display font-bold mb-4">Предварительная оценка</h1>

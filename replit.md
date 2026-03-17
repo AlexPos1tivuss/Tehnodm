@@ -57,7 +57,7 @@ Services: welding equipment maintenance, plasma portal repair/modernization, equ
 
 - `pnpm install` — install all deps
 - `pnpm --filter @workspace/scripts run seed` — create demo users
-- `pnpm --filter @workspace/api-server run test` — run Vitest tests (27 tests)
+- `pnpm --filter @workspace/api-server run test` — run Vitest tests (30 tests)
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API client + Zod schemas
 - `pnpm --filter @workspace/db run push` — push schema to DB
 

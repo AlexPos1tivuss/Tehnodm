@@ -39,6 +39,17 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: Rea
   return <Component />;
 }
 
+function RedirectHome() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    if (user?.role === "admin") setLocation("/admin");
+    else if (user?.role === "technician") setLocation("/technician");
+    else if (user?.role === "client") setLocation("/dashboard");
+  }, [user, setLocation]);
+  return <Home />;
+}
+
 function Router() {
   const [location] = useLocation();
   
@@ -48,7 +59,7 @@ function Router() {
       <main className="flex-1">
         <AnimatePresence mode="wait">
           <Switch key={location}>
-            <Route path="/" component={Home} />
+            <Route path="/" component={RedirectHome} />
             <Route path="/login" component={Login} />
             <Route path="/register" component={Register} />
             <Route path="/track" component={Track} />
