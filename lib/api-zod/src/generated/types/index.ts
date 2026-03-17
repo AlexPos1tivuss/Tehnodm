@@ -19,6 +19,7 @@ export * from "./healthStatus";
 export * from "./listBookingsParams";
 export * from "./listBookingsStatus";
 export * from "./loginBody";
+export * from "./refreshResponse";
 export * from "./registerBody";
 export * from "./repairLogResponse";
 export * from "./updateStatusBody";

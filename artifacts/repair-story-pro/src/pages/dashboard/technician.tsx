@@ -15,7 +15,7 @@ export default function TechnicianDashboard() {
   const [activeBookingId, setActiveBookingId] = useState<number | null>(null);
 
   const handleStatusChange = (id: number, toStatus: string) => {
-    statusMutation.mutate({ id, data: { to: toStatus, note } }, {
+    statusMutation.mutate({ id, data: { to: toStatus as "accepted" | "diagnosing" | "repairing" | "ready" | "closed", note } }, {
       onSuccess: () => {
         setNote("");
         setActiveBookingId(null);

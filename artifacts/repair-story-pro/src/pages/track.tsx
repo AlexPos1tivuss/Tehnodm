@@ -11,6 +11,7 @@ export default function Track() {
   const [searchCode, setSearchCode] = useState("");
 
   const { data, isLoading, isError, error } = useTrackBooking(searchCode, {
+    // @ts-expect-error orval generates strict UseQueryOptions requiring queryKey, but the hook provides it internally
     query: { enabled: !!searchCode, retry: false }
   });
 

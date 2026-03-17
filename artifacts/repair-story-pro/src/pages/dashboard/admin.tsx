@@ -103,6 +103,7 @@ export default function AdminDashboard() {
   const statusMutation = useUpdateBookingStatus();
 
   const { data: selectedBookingData } = useGetBooking(selectedBookingId!, {
+    // @ts-expect-error orval generates strict UseQueryOptions requiring queryKey, but the hook provides it internally
     query: { enabled: !!selectedBookingId },
   });
 
@@ -207,7 +208,7 @@ export default function AdminDashboard() {
   const confirmStatusChange = () => {
     if (!changingStatusId || !targetStatus) return;
     statusMutation.mutate(
-      { id: changingStatusId, data: { to: targetStatus, note: statusNote || undefined } },
+      { id: changingStatusId, data: { to: targetStatus as "accepted" | "diagnosing" | "repairing" | "ready" | "closed", note: statusNote || undefined } },
       {
         onSuccess: () => {
           setChangingStatusId(null);

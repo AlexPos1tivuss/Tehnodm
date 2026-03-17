@@ -18,6 +18,7 @@ export default function NewBooking() {
 
   const { data: slots, isLoading: slotsLoading } = useGetCalendarSlots(
     { date: selectedDate },
+    // @ts-expect-error orval generates strict UseQueryOptions requiring queryKey, but the hook provides it internally
     { query: { enabled: !!selectedDate } }
   );
 

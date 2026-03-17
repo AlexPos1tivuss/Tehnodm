@@ -44,6 +44,13 @@ export const LoginResponse = zod.object({
 });
 
 /**
+ * @summary Refresh access token
+ */
+export const RefreshTokenResponse = zod.object({
+  accessToken: zod.string(),
+});
+
+/**
  * @summary Get current user
  */
 export const GetMeResponse = zod.object({

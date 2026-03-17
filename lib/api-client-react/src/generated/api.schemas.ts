@@ -113,6 +113,10 @@ export interface AssignTechBody {
   technicianId: number;
 }
 
+export interface RefreshResponse {
+  accessToken: string;
+}
+
 export interface CalendarSlot {
   time: string;
   available: boolean;
