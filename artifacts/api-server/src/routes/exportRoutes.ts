@@ -20,6 +20,12 @@ router.get("/export/:id/pdf", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  const userRole = req.user!.role;
+  if (userRole === "client" && booking.clientId !== req.user!.userId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
   const logs = await db.select({
     id: repairLogsTable.id,
     bookingId: repairLogsTable.bookingId,

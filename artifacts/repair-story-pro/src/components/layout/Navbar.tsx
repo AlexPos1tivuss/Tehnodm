@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { LogOut, Wrench, FileSearch, HelpCircle, User, Calendar, LayoutDashboard } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -21,9 +22,11 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:shadow-primary/40 group-hover:-translate-y-0.5 transition-all">
-              <Wrench className="w-5 h-5" />
-            </div>
+            <img
+              src="/logo-tehnodm.png"
+              alt="ТехноДимак"
+              className="h-10 w-auto group-hover:-translate-y-0.5 transition-all"
+            />
             <span className="font-display font-bold text-xl tracking-tight text-foreground">
               Техно<span className="text-primary">Димак</span>
             </span>
