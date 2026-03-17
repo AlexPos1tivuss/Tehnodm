@@ -1,11 +1,10 @@
 import { Link } from "wouter";
 import { PageTransition } from "@/components/PageTransition";
-import { Wrench, ShieldCheck, Clock, ArrowRight, Search } from "lucide-react";
+import { Wrench, ShieldCheck, Clock, ArrowRight, Search, Flame, Truck, Settings } from "lucide-react";
 
 export default function Home() {
   return (
     <PageTransition className="min-h-[calc(100vh-4rem)] flex flex-col">
-      {/* Hero Section */}
       <section className="relative pt-24 pb-32 overflow-hidden flex-1 flex flex-col justify-center">
         <div className="absolute inset-0 z-0">
           <img 
@@ -18,14 +17,14 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-slate-900 mb-6 drop-shadow-sm">
-            Ваша техника в <br/>
+            Сварочное оборудование в <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-              надежных руках
+              надёжных руках
             </span>
           </h1>
           
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-600 mb-10 leading-relaxed">
-            Профессиональный ремонт смартфонов, ноутбуков и гаджетов в сервисном центре ТехноДимак. Быстро, качественно, с гарантией.
+            Профессиональный ремонт, обслуживание и аренда сварочного оборудования в сервисном центре ТехноДимак. Быстро, качественно, с гарантией.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -48,32 +47,42 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="py-20 bg-white relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-center mb-4">Наши услуги</h2>
+          <p className="text-slate-500 text-center mb-12 max-w-2xl mx-auto">Полный спектр услуг по обслуживанию сварочного и технологического оборудования</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
               <div className="w-14 h-14 bg-blue-100 text-primary rounded-2xl flex items-center justify-center mb-6">
-                <Wrench className="w-7 h-7" />
+                <Settings className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 font-display">Опытные мастера</h3>
-              <p className="text-slate-600">Наши инженеры имеют более 5 лет опыта ремонта сложной электроники любой конфигурации.</p>
+              <h3 className="text-xl font-bold mb-3 font-display">Техническое обслуживание</h3>
+              <p className="text-slate-600">Профессиональное техническое обслуживание сварочного оборудования всех типов.</p>
             </div>
 
             <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
               <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
-                <ShieldCheck className="w-7 h-7" />
+                <Flame className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 font-display">Честная гарантия</h3>
-              <p className="text-slate-600">Предоставляем документальную гарантию до 6 месяцев на все виды выполненных работ и запчасти.</p>
+              <h3 className="text-xl font-bold mb-3 font-display">Ремонт и модернизация</h3>
+              <p className="text-slate-600">Ремонт и модернизация порталов воздушно-плазменной резки.</p>
             </div>
 
             <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
               <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
-                <Clock className="w-7 h-7" />
+                <Truck className="w-7 h-7" />
               </div>
-              <h3 className="text-xl font-bold mb-3 font-display">Срочный ремонт</h3>
-              <p className="text-slate-600">80% типовых неисправностей устраняем в день обращения благодаря собственному складу.</p>
+              <h3 className="text-xl font-bold mb-3 font-display">Аренда оборудования</h3>
+              <p className="text-slate-600">Гибкие условия аренды сварочного оборудования для временных проектов.</p>
+            </div>
+
+            <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+              <div className="w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
+                <Wrench className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 font-display">Ремонт оборудования</h3>
+              <p className="text-slate-600">Ремонт сварочного и технологического оборудования любой сложности.</p>
             </div>
           </div>
         </div>

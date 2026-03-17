@@ -24,8 +24,9 @@ export default function Login() {
       if (data.user.role === "admin") setLocation("/admin");
       else if (data.user.role === "technician") setLocation("/technician");
       else setLocation("/dashboard");
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Ошибка входа. Проверьте данные.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Ошибка входа. Проверьте данные.";
+      setError(message);
     }
   };
 

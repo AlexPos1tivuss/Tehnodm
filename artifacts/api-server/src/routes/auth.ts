@@ -62,6 +62,20 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }));
 });
 
+router.post("/auth/refresh", requireAuth, async (req, res): Promise<void> => {
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.userId));
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  const accessToken = signToken({ userId: user.id, email: user.email, role: user.role });
+  res.json(LoginResponse.parse({
+    accessToken,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+  }));
+});
+
 router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.user!.userId));
   if (!user) {

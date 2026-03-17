@@ -19,7 +19,7 @@ import NotFound from "./pages/not-found";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ component: Component, allowedRoles }: { component: any, allowedRoles?: string[] }) {
+function ProtectedRoute({ component: Component, allowedRoles }: { component: React.ComponentType, allowedRoles?: string[] }) {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 

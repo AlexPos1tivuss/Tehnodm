@@ -22,8 +22,9 @@ export default function Register() {
       const data = await registerMutation.mutateAsync({ data: { name, email, password } });
       setAuthContext(data.accessToken, data.user);
       setLocation("/dashboard");
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Ошибка регистрации.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Ошибка регистрации.";
+      setError(message);
     }
   };
 

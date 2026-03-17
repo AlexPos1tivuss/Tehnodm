@@ -2,7 +2,9 @@
 
 ## Overview
 
-Full-stack service center management app for **ТехноДимак** (tehnodm.by). pnpm workspace monorepo using TypeScript.
+Full-stack service center management app for **ТехноДимак** (tehnodm.by) — welding and industrial equipment services. pnpm workspace monorepo using TypeScript.
+
+Services: welding equipment maintenance, plasma portal repair/modernization, equipment rental, general welding equipment repair.
 
 ## Stack
 

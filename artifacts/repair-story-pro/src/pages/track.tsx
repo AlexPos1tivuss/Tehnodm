@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTrackBooking } from "@workspace/api-client-react";
 import { PageTransition } from "@/components/PageTransition";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Search, Package, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, Package, Clock, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
