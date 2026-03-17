@@ -1,8 +1,8 @@
-# Workspace
+# Repair Story Pro
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+Full-stack service center management app for **ТехноДимак** (tehnodm.by). pnpm workspace monorepo using TypeScript.
 
 ## Stack
 
@@ -10,87 +10,118 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
+- **Frontend**: React + Vite + Tailwind CSS + React Query (Orval-generated hooks)
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
+- **Auth**: JWT (jsonwebtoken) + bcrypt, 3 roles: client / technician / admin
+- **Realtime**: Socket.io (path: `/api/socket.io`)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+- **Export**: PDFKit (PDF), CSV
+- **Tests**: Vitest + Supertest
 
 ## Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── artifacts/
+│   ├── api-server/          # Express API server
+│   │   ├── src/
+│   │   │   ├── routes/      # auth, bookings, calendar, export, users, health
+│   │   │   ├── middlewares/  # JWT auth middleware
+│   │   │   ├── lib/         # auth utils, booking code generator, calendar slots
+│   │   │   ├── services/    # Socket.io
+│   │   │   └── __tests__/   # Vitest tests (unit + API integration)
+│   │   └── package.json
+│   └── repair-story-pro/    # React frontend (Vite)
+│       ├── src/
+│       │   ├── pages/       # home, login, register, dashboard, admin, technician, track, troubleshooter, booking, calendar
+│       │   ├── components/  # Navbar, StatusBadge, PageTransition
+│       │   └── lib/         # auth context, troubleshooter-data, utils
+│       └── public/data/tree.json
+├── lib/
+│   ├── api-spec/            # OpenAPI 3.1 spec + Orval config
+│   ├── api-client-react/    # Generated React Query hooks
+│   ├── api-zod/             # Generated Zod schemas
+│   └── db/                  # Drizzle ORM schema (users, bookings, repair_logs)
+├── scripts/
+│   └── src/seed.ts          # Seed: admin, tech1, client1 + sample booking
+├── README.md
+├── demo.sh
+└── replit.md
 ```
+
+## Key Commands
+
+- `pnpm install` — install all deps
+- `pnpm --filter @workspace/scripts run seed` — create demo users
+- `pnpm --filter @workspace/api-server run test` — run Vitest tests (27 tests)
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API client + Zod schemas
+- `pnpm --filter @workspace/db run push` — push schema to DB
+
+## Demo Users
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@example.com | Passw0rd! | admin |
+| tech1@example.com | Passw0rd! | technician |
+| client1@example.com | Passw0rd! | client |
+
+## API Routes
+
+All mounted under `/api`:
+
+- `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
+- `GET /bookings` (admin/tech), `POST /bookings` (auth), `GET /bookings/my` (auth)
+- `GET /bookings/track/:code` (public), `PATCH /bookings/:id/status` (admin/tech), `PATCH /bookings/:id/assign` (admin)
+- `GET /calendar/slots?date=YYYY-MM-DD` (public)
+- `GET /export/:id/pdf` (auth), `GET /export/csv` (admin)
+- `GET /users/technicians` (admin)
+- `GET /healthz`
+
+## Booking Status Workflow
+
+```
+new → accepted → diagnosing → repairing → ready → closed
+```
+
+Each transition creates a `repair_logs` entry and emits Socket.io `booking:update`.
+
+## JWT Configuration
+
+- Secret: env `JWT_SECRET` (default: `repair-story-pro-secret-key-change-in-production`)
+- Expiry: 15 minutes
+- Token passed via `Authorization: Bearer <token>`
+
+## DB Schema
+
+- `users`: id, name, email (unique), passwordHash, role (client/technician/admin), createdAt
+- `bookings`: id, code (unique, R-XXXXX), device, issue, status, appointmentAt, clientId (FK), technicianId (FK), createdAt, updatedAt
+- `repair_logs`: id, bookingId (FK), fromStatus, toStatus, note, changedBy (FK), createdAt
 
 ## TypeScript & Composite Projects
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
-
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
-
-## Root Scripts
-
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+Every package extends `tsconfig.base.json` with `composite: true`. Root `tsconfig.json` lists all packages as project references. Typecheck from root: `pnpm run typecheck`.
 
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
+Express 5 API server with JWT auth, CRUD bookings, status workflow, calendar slots, PDF/CSV export, Socket.io realtime.
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+### `artifacts/repair-story-pro` (`@workspace/repair-story-pro`)
+React + Vite frontend. Russian UI for ТехноДимак branding. Pages: Home, Login, Register, ClientDashboard, AdminDashboard, TechnicianDashboard, PublicTracker, BookingForm, Calendar, Troubleshooter.
 
 ### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+Drizzle ORM schema + PostgreSQL connection. Tables: users, bookings, repair_logs.
 
 ### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
+OpenAPI 3.1 spec + Orval codegen config.
 
 ### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+Generated Zod schemas from OpenAPI spec.
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks + fetch client.
 
 ### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Utility scripts. Run via `pnpm --filter @workspace/scripts run <script>`.

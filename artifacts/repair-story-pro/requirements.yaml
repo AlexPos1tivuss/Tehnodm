@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "For page transitions and smooth micro-interactions"
+  "socket.io-client": "Real-time updates for booking status changes"
+  "date-fns": "For elegant date and time formatting"
+  "lucide-react": "Beautiful consistent icon set"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to cleanly merge tailwind classes"
+
+images:
+  - path: "artifacts/repair-story-pro/public/images/hero-bg.png"
+    description: "Abstract premium technology background with soft glowing blue and teal gradients, glassmorphism elements, clean minimal"
+    aspect_ratio: "16:9"
+  - path: "artifacts/repair-story-pro/public/images/auth-bg.png"
+    description: "Elegant abstract dark blue geometric shapes overlapping with soft lighting, subtle depth"
+    aspect_ratio: "16:9"
+
+notes:
+  - Global fetch is intercepted in auth.tsx to append the Bearer token to all requests.
+  - Orval generated React Query hooks are used from @workspace/api-client-react.
+  - Socket.io connects to root path.
