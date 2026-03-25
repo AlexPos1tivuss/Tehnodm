@@ -5,7 +5,13 @@ import {
   useAssignTechnician,
   useListTechnicians,
   useGetBooking,
+  useListWorkSessions,
+  useGetTimeSummary,
+  useCreateWorkSession,
+  useUpdateWorkSession,
+  useDeleteWorkSession,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { PageTransition } from "@/components/PageTransition";
 import { StatusBadge } from "@/components/StatusBadge";
 import { format } from "date-fns";
@@ -28,6 +34,10 @@ import {
   Mail,
   User,
   RefreshCw,
+  Timer,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { useSocket } from "@/hooks/use-socket";
 
@@ -48,7 +58,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   ready: ["closed"],
 };
 
-type TabType = "bookings" | "users" | "technicians";
+type TabType = "bookings" | "users" | "technicians" | "timeTracking";
 
 interface StatsData {
   total: number;
@@ -82,6 +92,7 @@ interface UserInfo {
 
 export default function AdminDashboard() {
   useSocket();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>("bookings");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -98,9 +109,131 @@ export default function AdminDashboard() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingStats, setLoadingStats] = useState(true);
 
+  const [ttFilterUser, setTtFilterUser] = useState<string>("");
+  const [ttDateFrom, setTtDateFrom] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return format(d, "yyyy-MM-dd");
+  });
+  const [ttDateTo, setTtDateTo] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [ttModalOpen, setTtModalOpen] = useState(false);
+  const [ttEditingSession, setTtEditingSession] = useState<{ id: number; userId: number; clockIn: string; clockOut: string; note: string } | null>(null);
+  const [ttFormUserId, setTtFormUserId] = useState<string>("");
+  const [ttFormClockIn, setTtFormClockIn] = useState("");
+  const [ttFormClockOut, setTtFormClockOut] = useState("");
+  const [ttFormNote, setTtFormNote] = useState("");
+  const [ttDeleteConfirm, setTtDeleteConfirm] = useState<number | null>(null);
+
   const { data: technicians } = useListTechnicians();
   const assignMutation = useAssignTechnician();
   const statusMutation = useUpdateBookingStatus();
+
+  const sessionsQuery = useListWorkSessions(
+    {
+      ...(ttFilterUser ? { userId: Number(ttFilterUser) } : {}),
+      ...(ttDateFrom ? { dateFrom: ttDateFrom } : {}),
+      ...(ttDateTo ? { dateTo: ttDateTo } : {}),
+    },
+    // @ts-expect-error orval generates strict options
+    { query: { enabled: activeTab === "timeTracking" } }
+  );
+  const summaryQuery = useGetTimeSummary(
+    {
+      ...(ttDateFrom ? { dateFrom: ttDateFrom } : {}),
+      ...(ttDateTo ? { dateTo: ttDateTo } : {}),
+    },
+    // @ts-expect-error orval generates strict options
+    { query: { enabled: activeTab === "timeTracking" } }
+  );
+  const createSessionMutation = useCreateWorkSession();
+  const updateSessionMutation = useUpdateWorkSession();
+  const deleteSessionMutation = useDeleteWorkSession();
+
+  const invalidateTT = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/time-tracking/sessions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/time-tracking/summary"] });
+  };
+
+  const openCreateModal = () => {
+    setTtEditingSession(null);
+    setTtFormUserId("");
+    setTtFormClockIn("");
+    setTtFormClockOut("");
+    setTtFormNote("");
+    setTtModalOpen(true);
+  };
+
+  const openEditModal = (s: { id: number; userId: number; clockIn: string; clockOut: string | null; note: string | null }) => {
+    setTtEditingSession({
+      id: s.id,
+      userId: s.userId,
+      clockIn: s.clockIn,
+      clockOut: s.clockOut || "",
+      note: s.note || "",
+    });
+    setTtFormUserId(String(s.userId));
+    setTtFormClockIn(s.clockIn ? format(new Date(s.clockIn), "yyyy-MM-dd'T'HH:mm") : "");
+    setTtFormClockOut(s.clockOut ? format(new Date(s.clockOut), "yyyy-MM-dd'T'HH:mm") : "");
+    setTtFormNote(s.note || "");
+    setTtModalOpen(true);
+  };
+
+  const handleTtSave = () => {
+    if (ttEditingSession) {
+      updateSessionMutation.mutate(
+        {
+          id: ttEditingSession.id,
+          data: {
+            clockIn: new Date(ttFormClockIn).toISOString(),
+            clockOut: ttFormClockOut ? new Date(ttFormClockOut).toISOString() : null,
+            note: ttFormNote || undefined,
+          },
+        },
+        {
+          onSuccess: () => {
+            setTtModalOpen(false);
+            invalidateTT();
+          },
+        }
+      );
+    } else {
+      if (!ttFormUserId || !ttFormClockIn) return;
+      createSessionMutation.mutate(
+        {
+          data: {
+            userId: Number(ttFormUserId),
+            clockIn: new Date(ttFormClockIn).toISOString(),
+            clockOut: ttFormClockOut ? new Date(ttFormClockOut).toISOString() : undefined,
+            note: ttFormNote || undefined,
+          },
+        },
+        {
+          onSuccess: () => {
+            setTtModalOpen(false);
+            invalidateTT();
+          },
+        }
+      );
+    }
+  };
+
+  const handleTtDelete = (id: number) => {
+    deleteSessionMutation.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          setTtDeleteConfirm(null);
+          invalidateTT();
+        },
+      }
+    );
+  };
+
+  const formatHours = (h: number) => {
+    const hrs = Math.floor(h);
+    const mins = Math.round((h - hrs) * 60);
+    return `${hrs}ч ${mins}м`;
+  };
 
   const { data: selectedBookingData } = useGetBooking(selectedBookingId!, {
     // @ts-expect-error orval generates strict UseQueryOptions requiring queryKey, but the hook provides it internally
@@ -375,6 +508,7 @@ export default function AdminDashboard() {
           { key: "bookings" as TabType, label: "Заявки", icon: Package },
           { key: "users" as TabType, label: "Пользователи", icon: Users },
           { key: "technicians" as TabType, label: "Мастера", icon: Wrench },
+          { key: "timeTracking" as TabType, label: "Рабочее время", icon: Timer },
         ].map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -625,6 +759,308 @@ export default function AdminDashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Time Tracking Tab */}
+      {activeTab === "timeTracking" && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {(() => {
+              const onShiftNow = sessionsQuery.data?.filter((s) => !s.clockOut).length || 0;
+              const todaySessions = sessionsQuery.data?.filter((s) => {
+                const d = new Date(s.clockIn);
+                const today = new Date();
+                return d.toDateString() === today.toDateString();
+              }).length || 0;
+              const totalHoursSum = summaryQuery.data?.reduce((acc, s) => acc + s.totalHours, 0) || 0;
+              return (
+                <>
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                      </div>
+                      <span className="text-sm text-slate-500">Сейчас на смене</span>
+                    </div>
+                    <p className="text-3xl font-bold">{onShiftNow}</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <span className="text-sm text-slate-500">Сессий сегодня</span>
+                    </div>
+                    <p className="text-3xl font-bold">{todaySessions}</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                        <BarChart3 className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <span className="text-sm text-slate-500">Всего часов за период</span>
+                    </div>
+                    <p className="text-3xl font-bold">{formatHours(totalHoursSum)}</p>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <select
+              value={ttFilterUser}
+              onChange={(e) => setTtFilterUser(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-primary text-sm min-w-[180px]"
+            >
+              <option value="">Все сотрудники</option>
+              {technicians?.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={ttDateFrom}
+              onChange={(e) => setTtDateFrom(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-primary text-sm"
+            />
+            <input
+              type="date"
+              value={ttDateTo}
+              onChange={(e) => setTtDateTo(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-primary text-sm"
+            />
+            <button
+              onClick={openCreateModal}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white font-medium rounded-xl hover:bg-primary/90 transition-colors text-sm"
+            >
+              <Plus className="w-4 h-4" /> Добавить запись
+            </button>
+          </div>
+
+          {summaryQuery.data && summaryQuery.data.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+              <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+                <h3 className="text-sm font-semibold text-slate-700">Итоги за период</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-xs text-slate-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 font-medium">Сотрудник</th>
+                      <th className="px-4 py-3 font-medium">Смен</th>
+                      <th className="px-4 py-3 font-medium">Итого часов</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {summaryQuery.data.map((s) => (
+                      <tr key={s.userId} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="font-medium">{s.userName}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-slate-600">{s.sessionCount}</td>
+                        <td className="px-4 py-3 font-semibold">{formatHours(s.totalHours)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700">Записи рабочего времени</h3>
+              <span className="text-xs text-slate-400">
+                {sessionsQuery.data?.length || 0} записей
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider bg-slate-50">
+                    <th className="px-4 py-3 font-medium">Сотрудник</th>
+                    <th className="px-4 py-3 font-medium">Начало смены</th>
+                    <th className="px-4 py-3 font-medium">Конец смены</th>
+                    <th className="px-4 py-3 font-medium">Длительность</th>
+                    <th className="px-4 py-3 font-medium">Заметка</th>
+                    <th className="px-4 py-3 font-medium text-right">Действия</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {sessionsQuery.isLoading ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400">Загрузка...</td>
+                    </tr>
+                  ) : !sessionsQuery.data?.length ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-400">Нет записей за выбранный период</td>
+                    </tr>
+                  ) : (
+                    sessionsQuery.data.map((s) => {
+                      const clockIn = new Date(s.clockIn);
+                      const clockOut = s.clockOut ? new Date(s.clockOut) : null;
+                      const durationMs = clockOut ? clockOut.getTime() - clockIn.getTime() : Date.now() - clockIn.getTime();
+                      const durationH = durationMs / 3600000;
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="w-4 h-4 text-primary" />
+                              </div>
+                              <span className="font-medium">{s.userName}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            <div>{format(clockIn, "dd.MM.yyyy", { locale: ru })}</div>
+                            <div className="text-slate-500 font-mono">{format(clockIn, "HH:mm")}</div>
+                          </td>
+                          <td className="px-4 py-3 text-xs">
+                            {clockOut ? (
+                              <>
+                                <div>{format(clockOut, "dd.MM.yyyy", { locale: ru })}</div>
+                                <div className="text-slate-500 font-mono">{format(clockOut, "HH:mm")}</div>
+                              </>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                На смене
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 font-mono text-sm">{formatHours(durationH)}</td>
+                          <td className="px-4 py-3 text-xs text-slate-500 max-w-[150px] truncate">{s.note || "—"}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => openEditModal(s)}
+                                className="p-1.5 text-slate-400 hover:text-primary bg-white rounded-lg border shadow-sm hover:shadow transition-all"
+                                title="Редактировать"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setTtDeleteConfirm(s.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-500 bg-white rounded-lg border shadow-sm hover:shadow transition-all"
+                                title="Удалить"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Time Tracking Create/Edit Modal */}
+      {ttModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">{ttEditingSession ? "Редактировать запись" : "Новая запись"}</h3>
+              <button onClick={() => setTtModalOpen(false)} className="p-1 hover:bg-slate-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {!ttEditingSession && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Сотрудник</label>
+                  <select
+                    value={ttFormUserId}
+                    onChange={(e) => setTtFormUserId(e.target.value)}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm"
+                  >
+                    <option value="">Выберите сотрудника</option>
+                    {technicians?.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Начало смены</label>
+                <input
+                  type="datetime-local"
+                  value={ttFormClockIn}
+                  onChange={(e) => setTtFormClockIn(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Конец смены</label>
+                <input
+                  type="datetime-local"
+                  value={ttFormClockOut}
+                  onChange={(e) => setTtFormClockOut(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl outline-none focus:border-primary text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Заметка</label>
+                <textarea
+                  value={ttFormNote}
+                  onChange={(e) => setTtFormNote(e.target.value)}
+                  placeholder="Необязательно"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl resize-none h-20 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setTtModalOpen(false)}
+                className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleTtSave}
+                disabled={createSessionMutation.isPending || updateSessionMutation.isPending}
+                className="flex-1 px-4 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {(createSessionMutation.isPending || updateSessionMutation.isPending) ? "Сохранение..." : "Сохранить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {ttDeleteConfirm !== null && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold mb-2">Удалить запись?</h3>
+            <p className="text-sm text-slate-600 mb-5">Это действие нельзя отменить.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setTtDeleteConfirm(null)}
+                className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => handleTtDelete(ttDeleteConfirm)}
+                disabled={deleteSessionMutation.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {deleteSessionMutation.isPending ? "Удаление..." : "Удалить"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Status Change Modal */}

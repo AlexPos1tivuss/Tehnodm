@@ -313,3 +313,111 @@ export const ListTechniciansResponseItem = zod.object({
   role: zod.enum(["client", "technician", "admin"]),
 });
 export const ListTechniciansResponse = zod.array(ListTechniciansResponseItem);
+
+/**
+ * @summary End current work shift
+ */
+export const ClockOutResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  clockIn: zod.date(),
+  clockOut: zod.date().nullish(),
+  note: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Get current shift status for authenticated user
+ */
+export const GetMyShiftStatusResponse = zod.object({
+  onShift: zod.boolean(),
+  session: zod
+    .object({
+      id: zod.number(),
+      userId: zod.number(),
+      clockIn: zod.date(),
+      clockOut: zod.date().nullish(),
+      note: zod.string().nullish(),
+      createdAt: zod.date(),
+    })
+    .nullish(),
+});
+
+/**
+ * @summary List work sessions (admin)
+ */
+export const ListWorkSessionsQueryParams = zod.object({
+  userId: zod.coerce.number().optional(),
+  dateFrom: zod.date().optional(),
+  dateTo: zod.date().optional(),
+});
+
+export const ListWorkSessionsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  userName: zod.string(),
+  clockIn: zod.date(),
+  clockOut: zod.date().nullish(),
+  note: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+export const ListWorkSessionsResponse = zod.array(ListWorkSessionsResponseItem);
+
+/**
+ * @summary Create a work session manually (admin)
+ */
+export const CreateWorkSessionBody = zod.object({
+  userId: zod.number(),
+  clockIn: zod.date(),
+  clockOut: zod.date().nullish(),
+  note: zod.string().optional(),
+});
+
+/**
+ * @summary Update a work session (admin)
+ */
+export const UpdateWorkSessionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateWorkSessionBody = zod.object({
+  clockIn: zod.date().optional(),
+  clockOut: zod.date().nullish(),
+  note: zod.string().optional(),
+});
+
+export const UpdateWorkSessionResponse = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  clockIn: zod.date(),
+  clockOut: zod.date().nullish(),
+  note: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+
+/**
+ * @summary Delete a work session (admin)
+ */
+export const DeleteWorkSessionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteWorkSessionResponse = zod.object({
+  error: zod.string(),
+});
+
+/**
+ * @summary Get work time summary per employee (admin)
+ */
+export const GetTimeSummaryQueryParams = zod.object({
+  dateFrom: zod.date().optional(),
+  dateTo: zod.date().optional(),
+});
+
+export const GetTimeSummaryResponseItem = zod.object({
+  userId: zod.number(),
+  userName: zod.string(),
+  totalHours: zod.number(),
+  sessionCount: zod.number(),
+});
+export const GetTimeSummaryResponse = zod.array(GetTimeSummaryResponseItem);

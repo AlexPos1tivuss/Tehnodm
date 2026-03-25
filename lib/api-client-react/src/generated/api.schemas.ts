@@ -122,6 +122,50 @@ export interface CalendarSlot {
   available: boolean;
 }
 
+export interface WorkSessionResponse {
+  id: number;
+  userId: number;
+  clockIn: string;
+  clockOut?: string | null;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface WorkSessionWithUser {
+  id: number;
+  userId: number;
+  userName: string;
+  clockIn: string;
+  clockOut?: string | null;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface ShiftStatusResponse {
+  onShift: boolean;
+  session?: WorkSessionResponse | null;
+}
+
+export interface CreateWorkSessionBody {
+  userId: number;
+  clockIn: string;
+  clockOut?: string | null;
+  note?: string;
+}
+
+export interface UpdateWorkSessionBody {
+  clockIn?: string;
+  clockOut?: string | null;
+  note?: string;
+}
+
+export interface TimeSummaryItem {
+  userId: number;
+  userName: string;
+  totalHours: number;
+  sessionCount: number;
+}
+
 export type ListBookingsParams = {
   status?: ListBookingsStatus;
   technicianId?: number;
@@ -141,4 +185,15 @@ export const ListBookingsStatus = {
 
 export type GetCalendarSlotsParams = {
   date: string;
+};
+
+export type ListWorkSessionsParams = {
+  userId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+export type GetTimeSummaryParams = {
+  dateFrom?: string;
+  dateTo?: string;
 };

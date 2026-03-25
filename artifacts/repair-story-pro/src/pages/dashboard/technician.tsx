@@ -1,18 +1,65 @@
-import { useState } from "react";
-import { useListBookings, useUpdateBookingStatus } from "@workspace/api-client-react";
+import { useState, useEffect } from "react";
+import {
+  useListBookings,
+  useUpdateBookingStatus,
+  useGetMyShiftStatus,
+  useClockIn,
+  useClockOut,
+} from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
 import { PageTransition } from "@/components/PageTransition";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useSocket } from "@/hooks/use-socket";
+import { Clock, Play, Square, Timer } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+
+function formatDuration(startTime: string): string {
+  const start = new Date(startTime).getTime();
+  const now = Date.now();
+  const diffMs = now - start;
+  const hours = Math.floor(diffMs / 3600000);
+  const minutes = Math.floor((diffMs % 3600000) / 60000);
+  const seconds = Math.floor((diffMs % 60000) / 1000);
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+}
 
 export default function TechnicianDashboard() {
   useSocket();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: bookings, isLoading } = useListBookings({ technicianId: user?.id });
   const statusMutation = useUpdateBookingStatus();
+  const { data: shiftStatus, isLoading: shiftLoading } = useGetMyShiftStatus();
+  const clockInMutation = useClockIn();
+  const clockOutMutation = useClockOut();
 
   const [note, setNote] = useState("");
   const [activeBookingId, setActiveBookingId] = useState<number | null>(null);
+  const [timerDisplay, setTimerDisplay] = useState("00:00:00");
+
+  useEffect(() => {
+    if (!shiftStatus?.onShift || !shiftStatus?.session?.clockIn) return;
+    const update = () => setTimerDisplay(formatDuration(shiftStatus.session!.clockIn));
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [shiftStatus?.onShift, shiftStatus?.session?.clockIn]);
+
+  const handleClockIn = () => {
+    clockInMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/time-tracking/my-status"] });
+      },
+    });
+  };
+
+  const handleClockOut = () => {
+    clockOutMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/time-tracking/my-status"] });
+      },
+    });
+  };
 
   const handleStatusChange = (id: number, toStatus: string) => {
     statusMutation.mutate({ id, data: { to: toStatus as "accepted" | "diagnosing" | "repairing" | "ready" | "closed", note } }, {
@@ -26,7 +73,62 @@ export default function TechnicianDashboard() {
   return (
     <PageTransition className="max-w-5xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-display font-bold mb-8">Рабочий стол инженера</h1>
-      
+
+      <div className={`rounded-2xl p-6 mb-8 border shadow-sm transition-all ${
+        shiftStatus?.onShift
+          ? "bg-emerald-50 border-emerald-200"
+          : "bg-white border-slate-200"
+      }`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              shiftStatus?.onShift ? "bg-emerald-100" : "bg-slate-100"
+            }`}>
+              {shiftStatus?.onShift ? (
+                <Timer className="w-6 h-6 text-emerald-600" />
+              ) : (
+                <Clock className="w-6 h-6 text-slate-400" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">
+                {shiftLoading ? "Загрузка..." : shiftStatus?.onShift ? "Вы на смене" : "Вы не на смене"}
+              </h2>
+              {shiftStatus?.onShift && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-2xl font-mono font-bold text-emerald-700">{timerDisplay}</span>
+                </div>
+              )}
+              {!shiftStatus?.onShift && !shiftLoading && (
+                <p className="text-sm text-slate-500">Нажмите кнопку, чтобы начать рабочую смену</p>
+              )}
+            </div>
+          </div>
+          <div>
+            {shiftStatus?.onShift ? (
+              <button
+                onClick={handleClockOut}
+                disabled={clockOutMutation.isPending}
+                className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50 shadow-sm"
+              >
+                <Square className="w-4 h-4" />
+                {clockOutMutation.isPending ? "Завершение..." : "Завершить смену"}
+              </button>
+            ) : (
+              <button
+                onClick={handleClockIn}
+                disabled={shiftLoading || clockInMutation.isPending}
+                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 shadow-sm"
+              >
+                <Play className="w-4 h-4" />
+                {clockInMutation.isPending ? "Начинаем..." : "Начать смену"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="space-y-4">
           {[1,2,3].map(i => <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-2xl" />)}

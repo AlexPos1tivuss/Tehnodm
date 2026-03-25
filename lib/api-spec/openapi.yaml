@@ -20,6 +20,8 @@ tags:
     description: Export operations
   - name: users
     description: User management
+  - name: time-tracking
+    description: Work time tracking
 
 paths:
   /healthz:
@@ -457,6 +459,244 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /time-tracking/clock-in:
+    post:
+      operationId: clockIn
+      tags: [time-tracking]
+      summary: Start a work shift
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Shift started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkSessionResponse"
+        "400":
+          description: Already clocked in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /time-tracking/clock-out:
+    post:
+      operationId: clockOut
+      tags: [time-tracking]
+      summary: End current work shift
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Shift ended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkSessionResponse"
+        "400":
+          description: Not clocked in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /time-tracking/my-status:
+    get:
+      operationId: getMyShiftStatus
+      tags: [time-tracking]
+      summary: Get current shift status for authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current shift status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShiftStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /time-tracking/sessions:
+    get:
+      operationId: listWorkSessions
+      tags: [time-tracking]
+      summary: List work sessions (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of work sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkSessionWithUser"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      operationId: createWorkSession
+      tags: [time-tracking]
+      summary: Create a work session manually (admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkSessionBody"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkSessionResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /time-tracking/sessions/{id}:
+    patch:
+      operationId: updateWorkSession
+      tags: [time-tracking]
+      summary: Update a work session (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkSessionBody"
+      responses:
+        "200":
+          description: Session updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkSessionResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      operationId: deleteWorkSession
+      tags: [time-tracking]
+      summary: Delete a work session (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /time-tracking/summary:
+    get:
+      operationId: getTimeSummary
+      tags: [time-tracking]
+      summary: Get work time summary per employee (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Summary per employee
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeSummaryItem"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -672,3 +912,118 @@ components:
       required:
         - time
         - available
+
+    WorkSessionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        clockIn:
+          type: string
+          format: date-time
+        clockOut:
+          type: string
+          format: date-time
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - clockIn
+        - createdAt
+
+    WorkSessionWithUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        clockIn:
+          type: string
+          format: date-time
+        clockOut:
+          type: string
+          format: date-time
+          nullable: true
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - userName
+        - clockIn
+        - createdAt
+
+    ShiftStatusResponse:
+      type: object
+      properties:
+        onShift:
+          type: boolean
+        session:
+          $ref: "#/components/schemas/WorkSessionResponse"
+          nullable: true
+      required:
+        - onShift
+
+    CreateWorkSessionBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+        clockIn:
+          type: string
+          format: date-time
+        clockOut:
+          type: string
+          format: date-time
+          nullable: true
+        note:
+          type: string
+      required:
+        - userId
+        - clockIn
+
+    UpdateWorkSessionBody:
+      type: object
+      properties:
+        clockIn:
+          type: string
+          format: date-time
+        clockOut:
+          type: string
+          format: date-time
+          nullable: true
+        note:
+          type: string
+
+    TimeSummaryItem:
+      type: object
+      properties:
+        userId:
+          type: integer
+        userName:
+          type: string
+        totalHours:
+          type: number
+          format: float
+        sessionCount:
+          type: integer
+      required:
+        - userId
+        - userName
+        - totalHours
+        - sessionCount
