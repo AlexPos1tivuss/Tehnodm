@@ -162,6 +162,20 @@ router.post("/time-tracking/sessions", requireAuth, requireRole("admin"), async 
       }
     }
 
+    if (!clockOutDate) {
+      const [existingOpen] = await db.select()
+        .from(workSessionsTable)
+        .where(and(
+          eq(workSessionsTable.userId, Number(userId)),
+          isNull(workSessionsTable.clockOut)
+        ))
+        .limit(1);
+      if (existingOpen) {
+        res.status(409).json({ error: "У сотрудника уже есть открытая смена" });
+        return;
+      }
+    }
+
     const [session] = await db.insert(workSessionsTable).values({
       userId: Number(userId),
       clockIn: clockInDate,

@@ -137,6 +137,12 @@ export default function AdminDashboard() {
     // @ts-expect-error orval generates strict options
     { query: { enabled: activeTab === "timeTracking" } }
   );
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todaySessionsQuery = useListWorkSessions(
+    { dateFrom: todayStr, dateTo: todayStr },
+    // @ts-expect-error orval generates strict options
+    { query: { enabled: activeTab === "timeTracking" } }
+  );
   const summaryQuery = useGetTimeSummary(
     {
       ...(ttDateFrom ? { dateFrom: ttDateFrom } : {}),
@@ -766,12 +772,8 @@ export default function AdminDashboard() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             {(() => {
-              const onShiftNow = sessionsQuery.data?.filter((s) => !s.clockOut).length || 0;
-              const todaySessions = sessionsQuery.data?.filter((s) => {
-                const d = new Date(s.clockIn);
-                const today = new Date();
-                return d.toDateString() === today.toDateString();
-              }).length || 0;
+              const onShiftNow = todaySessionsQuery.data?.filter((s) => !s.clockOut).length || 0;
+              const todaySessions = todaySessionsQuery.data?.length || 0;
               const totalHoursSum = summaryQuery.data?.reduce((acc, s) => acc + s.totalHours, 0) || 0;
               return (
                 <>
